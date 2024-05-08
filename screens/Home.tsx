@@ -1,103 +1,42 @@
-import { View, Text, ScrollView, FlatList, TouchableHighlight, TouchableOpacity, TouchableNativeFeedback, Image } from "react-native";
-import React from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  FlatList,
+  TouchableHighlight,
+  TouchableOpacity,
+  TouchableNativeFeedback,
+  Image,
+  TouchableWithoutFeedback,
+} from "react-native";
+import React, { useContext, useEffect } from "react";
 import { Feather } from "@expo/vector-icons";
-import { Divider } from "@gluestack-ui/themed";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Avatar from '../assets/avatar.jpg'
-
-const data = [
-  {
-    id: '1',
-    name: "Arun Patel",
-    online: true,
-    unreadMessages: 8,
-    lastMessage: "hello i am arun patel, where are your and this is very long message",
-    lastMessageTime: new Date(),
-  },
-  {
-    id: '2',
-    name: "Arun Patel",
-    online: false,
-    unreadMessages: 8,
-    lastMessage: "hello i am arun patel",
-    lastMessageTime: new Date(),
-  },
-  {
-    id: '3',
-    name: "Arun Patel",
-    online: true,
-    unreadMessages: 8,
-    lastMessage: "hello i am arun patel",
-    lastMessageTime: new Date(),
-  },
-  {
-    id: '4',
-    name: "Arun Patel",
-    online: true,
-    unreadMessages: 8,
-    lastMessage: "hello i am arun patel",
-    lastMessageTime: new Date(),
-  },
-  {
-    id: '5',
-    name: "Arun Patel",
-    online: true,
-    unreadMessages: 8,
-    lastMessage: "hello i am arun patel",
-    lastMessageTime: new Date(),
-  },
-  {
-    id: '6',
-    name: "Arun Patel",
-    online: true,
-    unreadMessages: 8,
-    lastMessage: "hello i am arun patel",
-    lastMessageTime: new Date(),
-  },
-  {
-    id: '7',
-    name: "Arun Patel",
-    online: true,
-    unreadMessages: 8,
-    lastMessage: "hello i am arun patel",
-    lastMessageTime: new Date(),
-  },
-  {
-    id: '8',
-    name: "Arun Patel",
-    online: true,
-    unreadMessages: 8,
-    lastMessage: "hello i am arun patel",
-    lastMessageTime: new Date(),
-  },
-  {
-    id: '9',
-    name: "Arun Patel",
-    online: true,
-    unreadMessages: 8,
-    lastMessage: "hello i am arun patel",
-    lastMessageTime: new Date(),
-  },
-  {
-    id: '10',
-    name: "Arun Patel",
-    online: true,
-    unreadMessages: 8,
-    lastMessage: "hello i am arun patel",
-    lastMessageTime: new Date(),
-  },
-];
+import Avatar from "../assets/avatar.jpg";
+import { CustomContext } from "../CustomContext";
+import { deleteToken } from "../helpers/TokenStorage/Index";
+import Colors from "../Colors";
+import AxiosInstance from "../Api/Index";
 
 const Home = ({ navigation }) => {
+  const {
+    userData,
+    setUserData,
+    contactList,
+    setContactList,
+    appsocket,
+    FriendRequest,
+  } = useContext(CustomContext);
+
   return (
-    <SafeAreaView className="flex-1">
-      <View className="flex flex-row justify-between mb-6 mt-2 px-3">
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="flex flex-row justify-between mt-2 px-3">
         <View className="h-fit">
           <Text className="text-typography-600 font-medium text-lg">
-            Hello userName,
+            Hello {userData.fullName},
           </Text>
           <Text className="text-typography-800 font-semibold text-2xl">
-            Appname
+            ChatBuddy
           </Text>
         </View>
         <View className="flex justify-center">
@@ -110,7 +49,7 @@ const Home = ({ navigation }) => {
           showsHorizontalScrollIndicator={false}
           className="flex flex-row gap-x-5 pl-3"
         >
-          <View className="flex items-center">
+          <View className="flex items-center pt-6">
             <View className="h-[55px] w-[55px] rounded-full bg-secondary-900 flex justify-center items-center border-secondary-800 border-2">
               <Feather name="search" size={25} color={"#404040"} />
             </View>
@@ -118,7 +57,50 @@ const Home = ({ navigation }) => {
               Search
             </Text>
           </View>
-          <View className="flex items-center">
+          <View className="flex items-center pt-6">
+            <TouchableWithoutFeedback
+              onPress={() => navigation.navigate("searchFriends")}
+            >
+              <View className="h-[55px] w-[55px] rounded-full bg-secondary-900 flex justify-center items-center border-secondary-800 border-2">
+                <Feather name="user-plus" size={25} color={"#404040"} />
+              </View>
+            </TouchableWithoutFeedback>
+            <Text className="text-typography-800 text-md font-medium mt-1 w-[60px] text-center">
+              Send Request
+            </Text>
+          </View>
+          <View className="flex items-center pt-6">
+            <TouchableWithoutFeedback
+              onPress={() => navigation.navigate("friendRequest")}
+            >
+              <View className="h-[55px] w-[55px] rounded-full bg-secondary-900 flex justify-center items-center border-secondary-800 border-2 relative">
+                <Feather name="user-check" size={25} color={"#404040"} />
+                {FriendRequest.length ? (
+                  <View className="bg-error-500 px-2 py-1 rounded-full absolute -top-2 -right-2 z-50">
+                    <Text className="text-typography-0 font-medium text-xs">
+                      {FriendRequest.length}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </TouchableWithoutFeedback>
+            <Text className="text-typography-800 text-md font-medium mt-1 w-[60px] text-center">
+              Friend Requests
+            </Text>
+          </View>
+          <View className="flex items-center pt-6">
+            <TouchableWithoutFeedback
+              onPress={() => navigation.navigate("allFriends")}
+            >
+              <View className="h-[55px] w-[55px] rounded-full bg-secondary-900 flex justify-center items-center border-secondary-800 border-2">
+                <Feather name="users" size={25} color={"#404040"} />
+              </View>
+            </TouchableWithoutFeedback>
+            <Text className="text-typography-800 text-md font-medium mt-1 w-[60px] text-center">
+              All Friends
+            </Text>
+          </View>
+          <View className="flex items-center pt-6">
             <View className="h-[55px] w-[55px] rounded-full bg-secondary-900 flex justify-center items-center border-secondary-800 border-2">
               <Feather name="airplay" size={25} color={"#404040"} />
             </View>
@@ -126,7 +108,7 @@ const Home = ({ navigation }) => {
               Connect
             </Text>
           </View>
-          <View className="flex items-center">
+          <View className="flex items-center pt-6">
             <View className="h-[55px] w-[55px] rounded-full bg-secondary-900 flex justify-center items-center border-secondary-800 border-2">
               <Feather name="at-sign" size={25} color={"#404040"} />
             </View>
@@ -134,7 +116,7 @@ const Home = ({ navigation }) => {
               Thread
             </Text>
           </View>
-          <View className="flex items-center">
+          <View className="flex items-center pt-6">
             <View className="h-[55px] w-[55px] rounded-full bg-secondary-900 flex justify-center items-center border-secondary-800 border-2">
               <Feather name="camera" size={25} color={"#404040"} />
             </View>
@@ -142,7 +124,7 @@ const Home = ({ navigation }) => {
               Post
             </Text>
           </View>
-          <View className="flex items-center">
+          <View className="flex items-center pt-6">
             <View className="h-[55px] w-[55px] rounded-full bg-secondary-900 flex justify-center items-center border-secondary-800 border-2">
               <Feather name="phone" size={25} color={"#404040"} />
             </View>
@@ -150,53 +132,139 @@ const Home = ({ navigation }) => {
               Calls
             </Text>
           </View>
-          <View className="flex items-center mr-8">
-            <View className="h-[55px] w-[55px] rounded-full bg-secondary-900 flex justify-center items-center border-secondary-800 border-2">
-              <Feather name="search" size={25} color={"#404040"} />
-            </View>
+          <View className="flex items-center pt-6 mr-8">
+            <TouchableWithoutFeedback
+              onPress={() => {
+                deleteToken().then(() => {
+                  console.log("log out");
+                  appsocket?.disconnect();
+                  setUserData({
+                    _id: "",
+                    fullName: "",
+                    dateOfBirth: "",
+                    avatar: "",
+                    profileComplete: false,
+                  });
+                  navigation.navigate("login");
+                });
+              }}
+            >
+              <View className="h-[55px] w-[55px] rounded-full bg-secondary-900 flex justify-center items-center border-secondary-800 border-2">
+                <Feather name="log-out" size={25} color={"#404040"} />
+              </View>
+            </TouchableWithoutFeedback>
             <Text className="text-typography-800 text-md font-medium mt-1">
-              Search
+              Log out
             </Text>
           </View>
         </ScrollView>
       </View>
       <View className="flex h-[1.5px] w-full mt-4 bg-tertiary-600"></View>
+      {/* <TouchableNativeFeedback
+        useForeground
+        onPress={() => {
+          navigation.navigate("chatscreen");
+        }}
+        delayPressIn={1000}
+        className="w-screen pt-1"
+      >
+        <View className="flex flex-row gap-x-3 items-center px-3 py-3 rounded-full bg-white">
+          <View className="h-[60px] w-[60px] rounded-full bg-secondary-900 flex justify-center items-center relative">
+            <Feather name="user-plus" size={30} color={"gray"} />
+          </View>
+          <View className="flex-1 flex-grow pl-1">
+            <Text className="text-typography-950 font-medium text-lg">
+              Message Requests
+            </Text>
+          </View>
+          <View className="flex items-end gap-y-1">
+            <View className="bg-error-500 px-2 py-1 rounded-full">
+              <Text className="text-typography-0 font-medium text-xs">6</Text>
+            </View>
+          </View>
+        </View>
+      </TouchableNativeFeedback> */}
+      {/* <View className="flex h-[1.5px] w-full bg-tertiary-600"></View> */}
       <FlatList
-        data={data}
+        data={contactList}
         // scrollEnabled={true}
         showsVerticalScrollIndicator={true}
-        className="pt-1"
+        className="pt-2"
         ListFooterComponent={<View className="py-3"></View>}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item._id}
         renderItem={({ item, index }) => (
-          <TouchableNativeFeedback useForeground onPress={() => { navigation.navigate("chatscreen") }} delayPressIn={1000} className="w-screen" >
+          <TouchableNativeFeedback
+            useForeground
+            onPress={() => {
+              navigation.navigate("chatscreen", {
+                userId: item.connectedUser._id,
+                unreadMessagesCount: item.unreadMessagesCount,
+              });
+            }}
+            delayPressIn={1000}
+            className="w-screen"
+          >
             <View className="flex flex-row gap-x-3 items-center px-3 py-3 rounded-full">
               <View className="h-[60px] w-[60px] rounded-full bg-secondary-900 flex justify-center items-center relative">
-                {index % 2 === 0 ? <Image source={Avatar} className='w-full h-full rounded-full' /> : <Feather name="image" size={30} color={"gray"} />}
-                {item.online ? (
+                {index % 2 === 0 ? (
+                  <Image
+                    source={Avatar}
+                    className="w-full h-full rounded-full"
+                  />
+                ) : (
+                  <Feather name="user" size={30} color={"gray"} />
+                )}
+                {item.online || true ? (
                   <View className="bg-success w-[18px] h-[18px] rounded-full border-[#ffff] border-2 absolute -bottom-0 -right-1"></View>
-                ) : <View className="bg-error w-[18px] h-[18px] rounded-full border-[#ffff] border-2 absolute -bottom-0 -right-1"></View>}
+                ) : (
+                  <View className="bg-error w-[18px] h-[18px] rounded-full border-[#ffff] border-2 absolute -bottom-0 -right-1"></View>
+                )}
               </View>
               <View className="flex-1 flex-grow pl-1">
                 <Text className="text-typography-950 font-medium text-lg">
-                  {item.name}
+                  {item.connectedUser.fullName}
                 </Text>
-                <Text className="text-typography-500 font-medium mt-1 text-[15px]" numberOfLines={1}>
-                  {item.lastMessage}
+                <Text
+                  className="text-typography-500 font-medium mt-1 text-[15px]"
+                  numberOfLines={1}
+                >
+                  {item.lastMessage.receiverId === item.connectedUser._id
+                    ? "me"
+                    : item.connectedUser.fullName}{" "}
+                  : {item.lastMessage.text}
                 </Text>
               </View>
               <View className="flex items-end gap-y-1">
                 <Text className="text-typography-500 font-medium text-md">
-                  {new Date(item.lastMessageTime).toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {new Date(item.lastMessage.timestamp).toLocaleTimeString(
+                    "en-US",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  )}
                 </Text>
-                <View className="bg-primary px-2 py-1 rounded-full">
-                  <Text className="text-typography-0 font-medium text-xs">
-                    {item.unreadMessages}
-                  </Text>
-                </View>
+                {item.lastMessage.receiverId === item.connectedUser._id ? (
+                  <View>
+                    <Feather
+                      name={
+                        item.lastMessage.status === "sent"
+                          ? "check"
+                          : "check-circle"
+                      }
+                      size={16}
+                      color={Colors.primary.DEFAULT}
+                    />
+                  </View>
+                ) : item.unreadMessagesCount ? (
+                  <View className="bg-primary px-2 py-1 rounded-full">
+                    <Text className="text-typography-0 font-medium text-xs">
+                      {item.unreadMessagesCount}
+                    </Text>
+                  </View>
+                ) : (
+                  <></>
+                )}
               </View>
             </View>
           </TouchableNativeFeedback>

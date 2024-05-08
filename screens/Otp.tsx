@@ -15,9 +15,14 @@ import CustomButton from "../helpers/Buttons/CustomButton";
 import AxiosInstance from "../Api/Index";
 import { getToken, storeToken } from "../helpers/TokenStorage/Index";
 import { CustomContext } from "../CustomContext";
+import { usePushNotifications } from "../usePushNotifications";
 
-const Login = ({ navigation }) => {
-  const [email, setEmail] = useState("");
+const Otp = ({ navigation }) => {
+  const [otp, setOtp] = useState("");
+  const { expoPushToken, notification } = usePushNotifications();
+  console.log("expo push token: ", expoPushToken);
+
+  const { userData, setUserData } = useContext(CustomContext);
 
   //   useEffect(() => {
   //     getToken().then((token) => {
@@ -25,32 +30,26 @@ const Login = ({ navigation }) => {
   //     });
   //   }, []);
 
-  const { setUserData } = useContext(CustomContext);
-
-  const handleLogin = () => {
-    console.log("email", email);
-    AxiosInstance.post("/api/creteUser", { email: email })
+  const verifyOtp = () => {
+    console.log("Otp", otp);
+    AxiosInstance.post("/auth/api/checkOtp", {
+      otp: otp,
+      expoPushToken: expoPushToken?.data.toString() || "emulatortoken",
+    })
       .then((response) => {
         console.log("data", response.data);
+        alert(response.data.message);
         if (response.data.success) {
-          alert(response.data.message);
-          storeToken(response.data.body.userData.loginToken);
-          if (response.data.body.userData.profileComplete) {
-            setUserData({
-              _id: response.data.body.userData._id,
-              fullName: response.data.body.userData.fullName,
-              dateOfBirth: response.data.body.userData.dateOfBirth,
-              avatar: response.data.body.userData.avatar,
-              // profileComplete: response.data.body.userData.profileComplete,
-            });
-            // navigation.navigate("home");
+          if (response.data.profileComplete) {
+            setUserData((pre) => ({ ...pre, profileComplete: true }));
+            navigation.navigate("home");
+          } else {
+            navigation.navigate("createProfile");
           }
-          alert(`your verification otp is ${response.data.body.otp}`);
-          navigation.navigate("verifyOtp");
         }
       })
       .catch((err) => {
-        console.log(err);
+        console.log(err.response.data.message);
         alert("Something went wrong");
       });
   };
@@ -68,19 +67,20 @@ const Login = ({ navigation }) => {
             </Text>
             <View className="w-full">
               <Text className="text-typography-600 font-semibold  text-lg mb-1">
-                Email
+                Enter Otp*
               </Text>
               <Textinput
-                placeholder="example@xyz.com"
-                onChangeText={setEmail}
-                value={email}
+                placeholder="000000"
+                onChangeText={(text) => setOtp(text)}
+                value={otp}
+                maxLength={6}
               />
               <CustomButton
-                ButtonText="Login"
+                ButtonText="Verify"
                 onPress={() => {
-                  handleLogin();
+                  verifyOtp();
                 }}
-                disable={email ? false : true}
+                disable={otp ? false : true}
               />
             </View>
           </View>
@@ -90,4 +90,4 @@ const Login = ({ navigation }) => {
   );
 };
 
-export default Login;
+export default Otp;
