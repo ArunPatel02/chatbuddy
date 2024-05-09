@@ -1,6 +1,6 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import Home from "./screens/Home";
 import Login from "./screens/Login";
 import CreateProfile from "./screens/CreateProfile";
@@ -31,6 +31,8 @@ const Navigation = ({ setAppIsReady }) => {
   } = useContext(CustomContext); // Assuming userdata and setUserData are context values
 
   // const { socket } = useSocket();
+
+  const contactRef = useRef([]);
 
   useEffect(() => {
     getToken().then((token) => {
@@ -75,10 +77,12 @@ const Navigation = ({ setAppIsReady }) => {
       .then((response) => {
         // console.log("contacts", response.data.body.contacts);
         setContactList(response.data.body.contacts);
+        contactRef.current = response.data.body.contacts;
         setcontactisFetched(true);
       })
       .catch((error) => {
         setAppIsReady(true);
+        setcontactisFetched(true);
         console.error("Error fetching contact data:", error);
       });
   };
@@ -98,7 +102,8 @@ const Navigation = ({ setAppIsReady }) => {
       userData.profileComplete &&
       userData._id &&
       !appsocket &&
-      !appsocket?.connected
+      !appsocket?.connected &&
+      contactisFetched
     ) {
       socket = io("https://chatbuddyapi-production.up.railway.app", {
         withCredentials: true,
@@ -131,15 +136,17 @@ const Navigation = ({ setAppIsReady }) => {
         //   contactisFetched
         // );
 
-        if (contactisFetched) {
+        if (contactisFetched && contactRef.current.length > 0) {
           if (isOld) {
-            setContactList((pre) =>
-              pre.map((item) =>
-                item._id === parseMessage._id ? parseMessage : item
-              )
+            const updateContact = contactRef.current.map((item) =>
+              item._id === parseMessage._id ? parseMessage : item
             );
+            setContactList(updateContact);
+            contactRef.current = updateContact;
           } else {
-            setContactList((pre) => [parseMessage, ...pre]);
+            const updateContact = [parseMessage, ...contactRef.current];
+            setContactList(updateContact);
+            contactRef.current = updateContact;
           }
         } else {
           fetchContactList();
@@ -148,28 +155,69 @@ const Navigation = ({ setAppIsReady }) => {
         // setFriendRequest((pre) => [...pre, parseMessage]);
       });
 
+      socket.on("userOnline", (message) => {
+        // console.log("userOnline", message, contactList);
+        if (contactisFetched && contactRef.current.length > 0) {
+          const updateStatus = contactRef.current.map((item) => ({
+            ...item,
+            connectedUser: {
+              ...item.connectedUser,
+              isOnline: item.connectedUser._id === message,
+            },
+          }));
+          contactRef.current = updateStatus;
+          setContactList(updateStatus);
+        }
+      });
+
+      socket.on("userOffline", (message) => {
+        // console.log("userOffline", message, contactList);
+        const parseMessage = JSON.parse(message);
+        if (contactisFetched && contactRef.current.length > 0) {
+          const updateStatus = contactRef.current.map((item) =>
+            item.connectedUser._id === parseMessage.userId
+              ? {
+                  ...item,
+                  connectedUser: {
+                    ...item.connectedUser,
+                    isOnline: parseMessage.isOnline,
+                    lastSeen: parseMessage.lastSeen,
+                  },
+                }
+              : item
+          );
+          contactRef.current = updateStatus;
+          setContactList(updateStatus);
+        }
+      });
+
       socket.on("markMessagesAsReadContact", (message) => {
         console.log("this is read contact message", message);
-        console.log("this is read contact list", contactList, contactisFetched);
+        console.log(
+          "this is read contact list",
+          contactList,
+          contactisFetched,
+          contactisFetched
+        );
         const parseData = JSON.parse(message);
-        if (contactisFetched) {
-          setContactList((pre) =>
-            pre.map((item) =>
-              item.connectedUser._id === parseData.userId
-                ? {
-                    ...item,
-                    unreadMessagesCount: 0,
-                    lastMessage: { ...item.lastMessage, status: "read" },
-                  }
-                : item
-            )
+        if (contactisFetched && contactRef.current.length > 0) {
+          const updateContact = contactRef.current.map((item) =>
+            item.connectedUser._id === parseData.userId
+              ? {
+                  ...item,
+                  unreadMessagesCount: 0,
+                  lastMessage: { ...item.lastMessage, status: "read" },
+                }
+              : item
           );
+          contactRef.current = updateContact;
+          setContactList(updateContact);
         } else {
           fetchContactList();
         }
       });
     }
-  }, [userData.profileComplete, userData._id]);
+  }, [userData.profileComplete, userData._id, contactisFetched]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextAppState) => {

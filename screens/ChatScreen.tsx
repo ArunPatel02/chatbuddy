@@ -21,6 +21,7 @@ import AxiosInstance from "../Api/Index";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
 import { CustomContext } from "../CustomContext";
+import timeDifference from "../helpers/hooks/timeDifference";
 
 const ChatScreen = () => {
   const route = useRoute();
@@ -40,6 +41,8 @@ const ChatScreen = () => {
   const scrollViewRef = useRef();
 
   const messagesRef = useRef([]);
+
+  const [lastSeenTime, setlastSeenTime] = useState("");
 
   //   console.log(userId, "userId");
   const [user, setUser] = useState(null);
@@ -317,6 +320,11 @@ const ChatScreen = () => {
             `/auth/api/getFriendUserById/${userId}`
           );
           setUser(response.data.body.userData);
+          if (!response.data.body.userData.isOnline) {
+            setlastSeenTime(
+              timeDifference(new Date(response.data.body.userData.lastSeen))
+            );
+          }
           fetchMessages();
         } catch (error) {
           console.error("Error fetching user:", error);
@@ -325,6 +333,21 @@ const ChatScreen = () => {
       fetchUser();
     }
   }, [userId]);
+
+  useEffect(() => {
+    let interval;
+    if (user && !user.isOnline) {
+      console.log("updating user time");
+      interval = setInterval(() => {
+        // console.log("updating user time");
+        setlastSeenTime(timeDifference(new Date(user.lastSeen)));
+      }, 1000*60);
+    }
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [user]);
 
   useEffect(() => {
     if (!Allfetched) return;
@@ -336,7 +359,7 @@ const ChatScreen = () => {
     if (filterMessages.length > 0) {
       setTimeout(() => {
         markMessagesAsRead();
-      }, 3000);
+      }, 2000);
     }
   }, [Messages.length]);
 
@@ -359,12 +382,21 @@ const ChatScreen = () => {
               >
                 {user.fullName}
               </Text>
-              <Text
-                className="text-success-500 font-medium text-[15px]"
-                numberOfLines={1}
-              >
-                Online
-              </Text>
+              {user.isOnline ? (
+                <Text
+                  className="text-success-500 font-medium text-[15px]"
+                  numberOfLines={1}
+                >
+                  Online
+                </Text>
+              ) : (
+                <Text
+                  className="text-typography-700 font-medium text-[15px]"
+                  numberOfLines={1}
+                >
+                  last seen {lastSeenTime} ago
+                </Text>
+              )}
             </View>
             <View className="flex-row gap-x-4">
               <Feather name="video" size={22} color="gray" />

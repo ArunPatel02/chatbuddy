@@ -2,7 +2,7 @@ import axios from "axios";
 import { getToken } from "../helpers/TokenStorage/Index";
 
 const AxiosInstance = axios.create({
-  // baseURL: "http://10.0.2.2:5000",
+  // baseURL: "http://192.168.1.3:5000",
   baseURL: "https://chatbuddyapi-production.up.railway.app",
   headers: {
     "Content-Type": "application/json",

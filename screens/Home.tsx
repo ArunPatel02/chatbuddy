@@ -138,14 +138,18 @@ const Home = ({ navigation }) => {
                 deleteToken().then(() => {
                   console.log("log out");
                   appsocket?.disconnect();
-                  setUserData({
-                    _id: "",
-                    fullName: "",
-                    dateOfBirth: "",
-                    avatar: "",
-                    profileComplete: false,
-                  });
-                  navigation.navigate("login");
+                  AxiosInstance.get(`/auth/api/logout/${userData._id}`).then(
+                    (res) => {
+                      setUserData({
+                        _id: "",
+                        fullName: "",
+                        dateOfBirth: "",
+                        avatar: "",
+                        profileComplete: false,
+                      });
+                      navigation.navigate("login");
+                    }
+                  );
                 });
               }}
             >
@@ -214,7 +218,7 @@ const Home = ({ navigation }) => {
                 ) : (
                   <Feather name="user" size={30} color={"gray"} />
                 )}
-                {item.online || true ? (
+                {item.connectedUser.isOnline ? (
                   <View className="bg-success w-[18px] h-[18px] rounded-full border-[#ffff] border-2 absolute -bottom-0 -right-1"></View>
                 ) : (
                   <View className="bg-error w-[18px] h-[18px] rounded-full border-[#ffff] border-2 absolute -bottom-0 -right-1"></View>
