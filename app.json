@@ -32,6 +32,12 @@
       "eas": {
         "projectId": "f8bc541f-d71b-4269-a0a3-2dfa3076d9ef"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f8bc541f-d71b-4269-a0a3-2dfa3076d9ef"
     }
   }
 }

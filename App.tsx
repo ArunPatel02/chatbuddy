@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import { NativeWindStyleSheet } from "nativewind";
 import { usePushNotifications } from "./usePushNotifications";
+import * as Updates from "expo-updates";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -17,14 +18,21 @@ NativeWindStyleSheet.setOutput({
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
   const { expoPushToken, notification } = usePushNotifications();
-  // console.log("expo push token: ", expoPushToken, notification);
 
-  // const onLayoutRootView = useCallback(async () => {
-  //   console.log("onLayoutRootView", appIsReady);
-  //   if (appIsReady) {
-  //     await SplashScreen.hideAsync();
-  //   }
-  // }, [appIsReady]);
+  async function onFetchUpdateAsync() {
+    try {
+      const update = await Updates.checkForUpdateAsync();
+
+      if (update.isAvailable) {
+        alert("updates is available");
+        await Updates.fetchUpdateAsync();
+        await Updates.reloadAsync();
+      }
+    } catch (error) {
+      // You can also add an alert() to see the error message in case of an error when fetching updates.
+      alert(`Error fetching latest Expo update: ${error}`);
+    }
+  }
 
   useEffect(() => {
     // console.log("onLayoutRootView", appIsReady);
@@ -33,6 +41,7 @@ export default function App() {
     };
     if (appIsReady) {
       hidescreen();
+      onFetchUpdateAsync();
     }
   }, [appIsReady]);
 
